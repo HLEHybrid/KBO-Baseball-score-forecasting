@@ -3,11 +3,11 @@ from requests import request
 from bs4 import BeautifulSoup
 import pandas as pd
 import re
+import numpy as np
 
 def recode_scraper(category1, category2, year):
     url = 'http://statiz.sporki.com/stats'
         
-    
     params = {
         'm':'main',
         'm2':category1,
@@ -143,9 +143,9 @@ def gamelog_scraper(year):
     df = pd.DataFrame(columns = columns)
     
     # 수비 데이터 호출
-    outfield_recode = recode_scraper('fielding','outField',2023)
-    infield_recode = recode_scraper('fielding','inField',2023)
-    catcher_recode = recode_scraper('fielding','catcher',2023)
+    outfield_recode = recode_scraper('fielding','outField',year)
+    infield_recode = recode_scraper('fielding','inField',year)
+    catcher_recode = recode_scraper('fielding','catcher',year)
     
     # 게임 별 Gamelog 수집
     for game_id in games_schedule:

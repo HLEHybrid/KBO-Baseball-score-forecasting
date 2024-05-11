@@ -56,7 +56,7 @@ def pitch_recode(year):
     pitching_balltype = recode_scraper('pitching','ballType',year)
     pitching_balltype = balltype_value_divider(pitching_balltype, 'pitching')
     
-    pitching_pitch = recode_scraper('pitching','pitch',2023)
+    pitching_pitch = recode_scraper('pitching','pitch',year)
     pitching_pitch.columns = ['(P) ' + column for column in pitching_pitch.columns]
     pitching_pitch['Pitcher Number'] = pitching_pitch['(P) Number']
     pitching_pitch['투수 이름'] = pitching_pitch['(P) 이름']
@@ -156,6 +156,31 @@ def balltype_value_divider(data, type):
             data[balltype_speed] = [float(value) if value != '' else np.nan for value in data[balltype_speed]]
         
         data = data[['Pitcher Number','투수 이름'] + balltype_speed_list + balltype_100_list]
+
+            # 열의 데이터를 숫자로 변환
+    for col in data.columns[3:]:
+        data[col] = pd.to_numeric(data[col], errors='coerce')
+    
+    # 결측치 처리
+    for col in range(data.shape[1]-2):
+        column_data = data.iloc[:, col+2]
+        valid_data = column_data[~pd.isna(column_data)]
+        Q1 = np.nanquantile(valid_data, 0.25)
+        Q3 = np.nanquantile(valid_data, 0.75)
+        IQR = Q3 - Q1
+
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+
+        # 이상치를 제외한 최솟값과 최댓값 계산
+        filtered_data = valid_data[(valid_data >= lower_bound) & (valid_data <= upper_bound)]
+        filtered_min = np.min(filtered_data)
+
+        # 결측치 대체 전략 설정
+        replacement_value = filtered_min if filtered_min < Q3 else Q3
+
+        # 결측치 대체
+        data.iloc[pd.isna(data.iloc[:, col+2]), col+2] = replacement_value
     
     return data
 
@@ -312,26 +337,6 @@ def gamelog_agg(year):
     
     # 1루타(1베이스 출루), 2루타(2베이스 출루), 3루타(3베이스 출루), 홈런, 아웃(삼진 + 플라이 아웃), 더블플레이, 사사구 외 상황 제거
     gamelog_agg = gamelog_agg.dropna(subset=['Result'])
-
-    for col in range(gamelog_agg.shape[1]):
-        column_data = gamelog_agg[:, col]
-        valid_data = column_data[~np.isnan(column_data)]
-        Q1 = np.quantile(valid_data, 0.25)
-        Q3 = np.quantile(valid_data, 0.75)
-        IQR = Q3 - Q1
-
-        lower_bound = Q1 - 1.5 * IQR
-        upper_bound = Q3 + 1.5 * IQR
-
-        # 이상치를 제외한 최솟값 계산
-        filtered_data = valid_data[(valid_data >= lower_bound) & (valid_data <= upper_bound)]
-        filtered_min = np.min(filtered_data)
-
-        # 결측치 대체 전략 설정
-        replacement_value = filtered_min if filtered_min < Q3 else Q3
-
-        # 결측치 대체
-        gamelog_agg[np.isnan(gamelog_agg[:, col]), col] = replacement_value
 
     gamelog_agg.to_excel('gamelog_agg_' + str(year) + '.xlsx')
 
