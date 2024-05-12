@@ -8,15 +8,25 @@ import numpy as np
 def recode_scraper(category1, category2, year):
     url = 'http://statiz.sporki.com/stats'
         
-    params = {
-        'm':'main',
-        'm2':category1,
-        'm3':category2,
-        'year':str(year),
-        'pr':'1000',
-        'reg':'C30',
-        'ls':'1'
-    }
+    if category1 == 'fielding':
+        params = {
+            'm':'main',
+            'm2':category1,
+            'm3':category2,
+            'year':str(year),
+            'pr':'1000',
+            'ls':'1'
+        }
+    else:
+        params = {
+            'm':'main',
+            'm2':category1,
+            'm3':category2,
+            'year':str(year),
+            'pr':'1000',
+            'reg':'C30',
+            'ls':'1'
+        }
 
     resp = request('GET',url=url, params=params)
     dom = BeautifulSoup(resp.text,'html.parser')
@@ -40,9 +50,9 @@ def recode_scraper(category1, category2, year):
         row['Number'] = players_num[i]
         row['이름'] = players[i]
         if (category1 == 'fielding'):
-            row['Position'] = position_data[30+3*i].text
+            row['Position'] = position_data[31+3*i].text
         else:
-            row['Position'] = position_data[48+3*i].text
+            row['Position'] = position_data[49+3*i].text
         for j in range(len(attrs)):
             index = i*(len(attrs)+4) + 4 + j
             row[attrs[j]] = data[index]

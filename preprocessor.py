@@ -157,7 +157,7 @@ def balltype_value_divider(data, type):
         
         data = data[['Pitcher Number','투수 이름'] + balltype_speed_list + balltype_100_list]
 
-            # 열의 데이터를 숫자로 변환
+    # 열의 데이터를 숫자로 변환
     for col in data.columns[3:]:
         data[col] = pd.to_numeric(data[col], errors='coerce')
     
@@ -182,6 +182,7 @@ def balltype_value_divider(data, type):
         # 결측치 대체
         data.iloc[pd.isna(data.iloc[:, col+2]), col+2] = replacement_value
     
+
     return data
 
 
