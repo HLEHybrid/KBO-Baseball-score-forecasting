@@ -6,7 +6,7 @@ import re
 import numpy as np
 
 def recode_scraper(category1, category2, year):
-    url = 'http://statiz.sporki.com/stats'
+    url = 'http://sporki.statiz.co.kr/stats/'
         
     if category1 == 'fielding':
         params = {
@@ -126,7 +126,7 @@ def gamelog_scraper(year):
     
     # 1 ~ 12월까지 경기 ID 수집
     for i in range(1,13):
-        url = 'http://statiz.sporki.com/schedule'
+        url = 'http://sporki.statiz.co.kr/schedule/'
     
         params = {
             'year':str(year),
@@ -160,7 +160,7 @@ def gamelog_scraper(year):
     # 게임 별 Gamelog 수집
     for game_id in games_schedule:
         
-        url = 'http://statiz.sporki.com/schedule'
+        url = 'http://sporki.statiz.co.kr/schedule/'
         
         params = {
             'm':'gamelogs',

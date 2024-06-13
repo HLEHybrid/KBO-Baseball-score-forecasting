@@ -187,7 +187,7 @@ def balltype_value_divider(data, type):
 
 
 def split_finder(player_num,type):
-    url = 'http://statiz.sporki.com/player'
+    url = 'http://sporki.statiz.co.kr/player/'
 
     params = {
         'm':'playerinfo',
