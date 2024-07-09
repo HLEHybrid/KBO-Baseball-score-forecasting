@@ -170,8 +170,8 @@ def gamelog_scraper(year):
         resp = request('GET',url=url, params=params)
         dom = BeautifulSoup(resp.text,'html.parser')
         
-        stadium = dom.find_all(attrs={'class':'txt'})[1].text[7:9]
-        date = dom.find_all(attrs={'class':'txt'})[1].text[11:16]
+        stadium = dom.find_all(attrs={'class':'txt'})[2].text[7:9]
+        date = dom.find_all(attrs={'class':'txt'})[2].text[11:16]
         print(stadium, date)
         game_canceled = dom.find_all(attrs={'style':'font-size:1.6rem;'})
     

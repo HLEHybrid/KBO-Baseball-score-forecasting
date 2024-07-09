@@ -236,7 +236,7 @@ def gamelog_agg(year):
 
     # 2024년 4월 24일 현재 전체 시즌 파크 팩터
     park_factors = {'잠실':895, '사직':1064,'창원':1051,'대구':1111,'수원':1020,'문학':985, '고척':965, '대전':1019, '광주':1000,
-                '울산':1000,'포항':1000}
+                    '울산':1000,'포항':1000,'청주':1000}
     park_factors_list = []
     for stadium in list(gamelog['경기장']):
         park_factors_list.append(park_factors[stadium])
@@ -346,7 +346,7 @@ def gamelog_agg(year):
 
 if __name__ == "__main__":
     # 분석을 원하는 연도 입력
-    years = [2022,2023]
+    years = [2019,2020,2021,2022,2023]
     gamelog_all = pd.DataFrame()
 
     for year in years:

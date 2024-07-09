@@ -10,6 +10,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from matplotlib.offsetbox import AnchoredText
+import math
 
 # 마르코프 체인에서 상태 ID를 반환하는 함수
 def getID(first, second, third, outs, inning):
@@ -181,14 +182,14 @@ def simulateMarkovChain(transitionMatrices):
     :param transitionMatrices: [numpy array]. 라인업에 포함된 타자에 대한 9개의 (217x217) 전이 행렬 리스트.
     :return: numpy 21x217 배열. 배열의 i번째 행은 i 득점이 된 상태를 나타냅니다.
     """
-    u = np.zeros((31, 217))
+    u = np.zeros((21, 217))
     u[0][0] = 1
     iterations = 0
     batter = 0
-    while sum(u)[216] < 0.999 and iterations < 1000:
+    while sum(u)[216] < 0.999 and iterations < 2000:
         p = transitionMatrices[batter]
-        next_u = np.zeros((31, 217))
-        for i in range(31):
+        next_u = np.zeros((21, 217))
+        for i in range(21):
             for j in range(5):
                 if i - j >= 0:
                     next_u[i] += u[i-j] @ p[j]
@@ -212,17 +213,32 @@ def teamExpectedRuns(teamName, opponent_team_name, starter_lineup_list, relief_l
     print('상대 선발 투수: ' + starter_name + '\n')
     print('라인업: ' + str(list(map(lambda Batter: Batter.name, starter_lineup_list[0]))) + '\n')
     
+    try:
+        avg_inning = float(starter_data[starter_data['Number'] == starter_num].loc[:, 'IP per GS, 선발 경기당 이닝 수'])
+        if avg_inning < 5.0:
+            avg_inning = 5.0
+    except:
+        avg_inning = 5.0
+    
     # 선발 투수 득점 계산
     u = expectedRuns(starter_lineup_list[0])
     starter_expRuns = 0
-    for i in range(31):
-        starter_expRuns += i * u[i]
+    if sum(u) < 0.7:
+        print('게임 종료 확률이 낮아 예상 실점을 계산할 수 없습니다.')
+        u = (1/sum(u))*u
+        
+        for i in range(21):
+            starter_expRuns += i * u[i]
+        
+        avg_inning = 9 * (4/starter_expRuns)
+    else:
+        for i in range(21):
+            starter_expRuns += i * u[i]
+        if (avg_inning / 9) * starter_expRuns > 4:
+            avg_inning = 9 * (4/starter_expRuns)
         
     # 불펜 투수 득점 계산
-    try:
-        avg_inning = float(starter_data[starter_data['Number'] == starter_num].loc[:, 'IP per GS, 선발 경기당 이닝 수'])
-    except:
-        avg_inning = 4.0
+    
 
     relief_exp_runs_list = []
     for relief_lineup in relief_lineup_list:
@@ -250,14 +266,17 @@ def teamExpectedRuns(teamName, opponent_team_name, starter_lineup_list, relief_l
     plt.savefig(f'img/{teamName}.png')
 
     print('게임 종료 확률: ' + str(sum(u)) + '\n')
+    print('\n선발 투수 평균 이닝 수: ' + str(avg_inning) + '\n')
+    print('선발 투수에 의한 예상 실점: ' + str((avg_inning / 9) * starter_expRuns) + '\n')
+    print('선발 투수에 의한 예상 실점(9이닝 당): ' + str(starter_expRuns) + '\n')
+
     print('각 점수에 대한 확률:')
-    for i in range(31):
+    for i in range(21):
         print(str(i) + ': ' + str(u[i]))
     
-    print('\n선발 투수 평균 이닝 수: ' + str(avg_inning) + '\n')
-    print('\n구원 투수 예상 득점: ' + str(((9 - avg_inning) / 9) * relief_expRuns) + '\n')
-    print('\n선발 투수에 의한 예상 득점: ' + str((avg_inning / 9) * starter_expRuns) + '\n')
-    print('\n총 예상 득점: ' + str(total_expRuns) + '\n')
+    print('\n구원 투수 예상 실점: ' + str(((9 - avg_inning) / 9) * relief_expRuns) + '\n')
+
+    print('\n총 예상 실점:' + str(total_expRuns) + '\n')
     
     return total_expRuns
 
@@ -271,14 +290,14 @@ def expectedRemainingRuns(lineup, batterUp, startState):
     :return: 주어진 상태에서 팀이 득점할 예상 점수.
     """
     transitionsMatrices = list(map(lambda Batter: Batter.transitionMatrixSimple(), lineup))
-    u = np.zeros((31, 217))
+    u = np.zeros((21, 217))
     u[0][startState.id] = 1
     iterations = 0
     batter = batterUp
-    while sum(u)[216] < 0.999 and iterations < 1000:
+    while sum(u)[216] < 0.999 and iterations < 2000:
         p = transitionsMatrices[batter]
-        next_u = np.zeros((31, 217))
-        for i in range(31):
+        next_u = np.zeros((21, 217))
+        for i in range(21):
             for j in range(5):
                 if i - j >= 0:
                     next_u[i] += u[i-j] @ p[j]
@@ -287,8 +306,14 @@ def expectedRemainingRuns(lineup, batterUp, startState):
         iterations += 1
     u = u[:, 216]
     expRuns = 0
-    for i in range(31):
-        expRuns += i * u[i]
+    if sum(u) < 0.7:
+        # u = (1/sum(u))*u
+        expRuns = 9
+    else:
+        for i in range(21):
+            expRuns += i * u[i]
+        if expRuns > 9:
+            expRuns = 9
     return expRuns
 
 def split_changer(split_name, position):
@@ -347,7 +372,7 @@ def pitcher_batter_aug(pitcher_data, batter_data, defence, outfield_recode, infi
         batter_pitcher = pd.merge(batter_pitcher,pitcher_data)
         batter_pitcher = pd.merge(batter_pitcher,batter_data)
         park_factors = {'잠실':895, '사직':1064,'창원':1051,'대구':1111,'수원':1020,'문학':985, '고척':965, '대전':1019, '광주':1000,
-                    '울산':1000,'포항':1000}
+                    '울산':1000,'포항':1000,'청주':1000}
         batter_pitcher['파크팩터'] = park_factors[stadium]
         
         columns_to_select = [
@@ -465,14 +490,15 @@ def today_lineup(bat_recode, pitch_recode, year, date):
     matchs = today_schedule[0].find_elements(By.CLASS_NAME, 'MatchBoxLinkArea_link_match__3MbV_')
     match_link_list = list()
 
-    for i in range(int(len(matchs) / 2)):
+    for i in range(int(math.ceil(len(matchs) / 2))):
         match_link = matchs[2 * i].get_attribute('href')
         match_link = match_link.replace('preview', 'lineup')
         match_link = match_link.replace('video', 'lineup')
         match_link = match_link.replace('relay', 'lineup')
-        match_link = match_link.replace('recode', 'lineup')
+        match_link = match_link.replace('record', 'lineup')
+        match_link = match_link.replace('cheer', 'lineup')
         match_link_list.append(match_link)
-    
+
     results = {}
     for link in match_link_list:
         try:
@@ -677,8 +703,9 @@ def today_lineup(bat_recode, pitch_recode, year, date):
                 'home_win_prob': home_win_prob,
                 'away_win_prob': away_win_prob
             }
-        except:
+        except Exception as e:
             print('이 경기는 라인업이 뜨지 않았거나 취소되었습니다.')
+            print(e)
 
     driver.close()
     return results
@@ -726,5 +753,5 @@ if __name__ == '__main__':
     pitch_recode['Sinker Velocity, 평균구속 (싱커)'] = 126.1545879
     pitch_recode['Sinker Pitch Value per 100, 구종가치/100 (싱커)'] = -1.485315299
 
-    results = today_lineup(bat_recode, pitch_recode, 2024, '2024-06-13')
+    results = today_lineup(bat_recode, pitch_recode, 2024, '2024-07-09')
     save_results_as_image(results, 'img/results.png')

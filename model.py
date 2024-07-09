@@ -59,42 +59,42 @@ if __name__ == "__main__":
     model = Sequential()
 
     # Input layer와 hidden layer 추가
-    model.add(Dense(units=128, activation='relu', input_shape=(np.shape(x_train)[1],)))
+    model.add(Dense(units=256, activation='relu', input_shape=(np.shape(x_train)[1],)))
     model.add(Dropout(0.03))
     # 추가적인 hidden layer와 output layer 추가
-    model.add(Dense(units=128, activation='relu'))
+    model.add(Dense(units=256, activation='relu'))
     model.add(Dense(units=7, activation='softmax'))
 
     # 모델 컴파일
     model.compile(optimizer=tf.keras.optimizers.Adam(), loss='categorical_crossentropy', metrics=['accuracy'])
 
     # 모델 학습
-    history = model.fit(x_train, y_train, epochs=200, batch_size=32, validation_data=(x_val, y_val),callbacks=[modelckpt])
+    history = model.fit(x_train, y_train, epochs=100, batch_size=32, validation_data=(x_val, y_val),callbacks=[modelckpt])
 
     loss = history.history['loss']
     val_loss = history.history['val_loss']
 
     epochs = range(1, len(loss) + 1)
 
-    plt.plot(epochs, loss, 'bo', label='Training loss')
-    plt.plot(epochs, val_loss, 'b', label='Validation loss')
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, loss, 'bo-', label='Training loss')
+    plt.plot(epochs, val_loss, 'ro-', label='Validation loss')
     plt.title('Training and validation loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
+    plt.grid(True)
+    plt.savefig('loss_learning_curve.png', dpi=300)
 
-    plt.savefig('loss learning_curve.png')
+    accuracy = history.history['accuracy']
+    val_accuracy = history.history['val_accuracy']
 
-    loss = history.history['accuracy']
-    val_loss = history.history['val_accuracy']
-
-    epochs = range(1, len(loss) + 1)
-
-    plt.plot(epochs, loss, 'bo', label='Training Accuracy')
-    plt.plot(epochs, val_loss, 'b', label='Validation Accuracy')
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, accuracy, 'bo-', label='Training Accuracy')
+    plt.plot(epochs, val_accuracy, 'ro-', label='Validation Accuracy')
     plt.title('Training and validation Accuracy')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-
-    plt.savefig('accuracy learning_curve.png')
+    plt.grid(True)
+    plt.savefig('accuracy_learning_curve.png', dpi=300)
