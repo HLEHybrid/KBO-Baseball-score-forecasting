@@ -187,7 +187,7 @@ def balltype_value_divider(data, type):
 
 
 def split_finder(player_num,type):
-    url = 'http://sporki.statiz.co.kr/player/'
+    url = 'https://statiz.sporki.com/player/'
 
     params = {
         'm':'playerinfo',
@@ -235,8 +235,8 @@ def gamelog_agg(year):
     pitching_player_data = pitch_recode(year)
 
     # 2024년 4월 24일 현재 전체 시즌 파크 팩터
-    park_factors = {'잠실':895, '사직':1064,'창원':1051,'대구':1111,'수원':1020,'문학':985, '고척':965, '대전':1019, '광주':1000,
-                    '울산':1000,'포항':1000,'청주':1000}
+    park_factors = {'잠실':896, '사직':1066,'창원':1026,'대구':1115,'수원':1019,'문학':992, '고척':951, '한밭':1018, '광주':1005,
+                    '울산':1000,'포항':1000,'청주':1000, '대전':1000}
     park_factors_list = []
     for stadium in list(gamelog['경기장']):
         park_factors_list.append(park_factors[stadium])
@@ -339,18 +339,44 @@ def gamelog_agg(year):
     # 1루타(1베이스 출루), 2루타(2베이스 출루), 3루타(3베이스 출루), 홈런, 아웃(삼진 + 플라이 아웃), 더블플레이, 사사구 외 상황 제거
     gamelog_agg = gamelog_agg.dropna(subset=['Result'])
 
-    gamelog_agg.to_excel('gamelog_agg_' + str(year) + '.xlsx')
+    gamelog_agg.to_excel('data/gamelog_agg_' + str(year) + '.xlsx')
 
     return gamelog_agg
 
 
 if __name__ == "__main__":
     # 분석을 원하는 연도 입력
-    years = [2019,2020,2021,2022,2023]
+    years = [2019,2020,2021,2022,2023,2024]
     gamelog_all = pd.DataFrame()
 
     for year in years:
         gamelog = gamelog_agg(year)
         gamelog_all = pd.concat([gamelog_all,gamelog],axis=0)
+        
+    gamelog_all.dropna(axis=1, how='all', inplace=True)
     
-    gamelog_all.to_excel('gamelog_agg.xlsx')
+    # 열의 데이터를 숫자로 변환
+    for col in gamelog_all.columns[6:-2]:
+        gamelog_all[col] = pd.to_numeric(gamelog_all[col], errors='coerce')
+    
+    for col in range(gamelog_all.shape[1]-7):
+        column_data = gamelog_all.iloc[:, col+6]
+        valid_data = column_data[~pd.isna(column_data)]
+        Q1 = np.nanquantile(valid_data, 0.25)
+        Q3 = np.nanquantile(valid_data, 0.75)
+        IQR = Q3 - Q1
+
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+
+        # 이상치를 제외한 최솟값과 최댓값 계산
+        filtered_data = valid_data[(valid_data >= lower_bound) & (valid_data <= upper_bound)]
+        filtered_min = np.min(filtered_data)
+
+        # 결측치 대체 전략 설정
+        replacement_value = filtered_min if filtered_min < Q3 else Q3
+
+        # 결측치 대체
+        gamelog_all.iloc[pd.isna(gamelog_all.iloc[:, col+6]), col+6] = replacement_value
+    
+    gamelog_all.to_excel('data/gamelog_agg.xlsx')

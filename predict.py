@@ -8,7 +8,7 @@ import scraper
 from pickle import load
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
+import koreanize_matplotlib
 from matplotlib.offsetbox import AnchoredText
 import math
 
@@ -456,7 +456,7 @@ def make_prob_lineup(data_list, load_scaler, model):
             bb = y_predict[i][4]
             outs = y_predict[i][5]
             homerun = y_predict[i][6]
-            lineup.append(Player(playerID, name, first, second, third, double, bb, outs, homerun))
+            lineup.append(Player(playerID, name, first, second, third, bb, homerun, outs, double))
             
         lineup_list.append(lineup)
         
@@ -674,7 +674,7 @@ def today_lineup(bat_recode, pitch_recode, year, date):
 
             load_scaler = load(open('scaler.pkl', 'rb'))
 
-            model_path = 'models/kbo_model_dnn.hdf5'
+            model_path = 'models/kbo_model_vae.keras'
             model = tf.keras.models.load_model(model_path) 
 
             home_batter_away_starter_lineup_list = make_prob_lineup(home_batter_away_starter_list, load_scaler, model)
@@ -740,10 +740,6 @@ def save_results_as_image(results, filename):
 
     
 if __name__ == '__main__':
-    # 한글 폰트 설정
-    font_path = 'C:/Windows/Fonts/malgun.ttf'  # 또는 사용자의 시스템에 설치된 다른 한글 폰트 경로
-    font_prop = fm.FontProperties(fname=font_path)
-    plt.rc('font', family=font_prop.get_name())
 
     bat_recode = preprocessor.bat_recode(2024)
     pitch_recode = preprocessor.pitch_recode(2024)
@@ -753,5 +749,5 @@ if __name__ == '__main__':
     pitch_recode['Sinker Velocity, 평균구속 (싱커)'] = 126.1545879
     pitch_recode['Sinker Pitch Value per 100, 구종가치/100 (싱커)'] = -1.485315299
 
-    results = today_lineup(bat_recode, pitch_recode, 2024, '2024-07-09')
+    results = today_lineup(bat_recode, pitch_recode, 2024, '2025-03-11')
     save_results_as_image(results, 'img/results.png')

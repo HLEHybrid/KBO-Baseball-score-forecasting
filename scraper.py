@@ -6,7 +6,7 @@ import re
 import numpy as np
 
 def recode_scraper(category1, category2, year):
-    url = 'http://sporki.statiz.co.kr/stats/'
+    url = 'https://statiz.sporki.com/stats/'
         
     if category1 == 'fielding':
         params = {
@@ -126,7 +126,7 @@ def gamelog_scraper(year):
     
     # 1 ~ 12월까지 경기 ID 수집
     for i in range(1,13):
-        url = 'http://sporki.statiz.co.kr/schedule/'
+        url = 'https://statiz.sporki.com/schedule/'
     
         params = {
             'year':str(year),
@@ -160,7 +160,7 @@ def gamelog_scraper(year):
     # 게임 별 Gamelog 수집
     for game_id in games_schedule:
         
-        url = 'http://sporki.statiz.co.kr/schedule/'
+        url = 'https://statiz.sporki.com/schedule/'
         
         params = {
             'm':'gamelogs',
@@ -170,8 +170,8 @@ def gamelog_scraper(year):
         resp = request('GET',url=url, params=params)
         dom = BeautifulSoup(resp.text,'html.parser')
         
-        stadium = dom.find_all(attrs={'class':'txt'})[2].text[7:9]
-        date = dom.find_all(attrs={'class':'txt'})[2].text[11:16]
+        stadium = dom.find_all(attrs={'class':'txt'})[1].text[7:9]
+        date = dom.find_all(attrs={'class':'txt'})[1].text[11:16]
         print(stadium, date)
         game_canceled = dom.find_all(attrs={'style':'font-size:1.6rem;'})
     
@@ -221,7 +221,7 @@ def gamelog_scraper(year):
 
         for i in range(len(players_num_lineup)):
             number = players_num_lineup[i]
-            lineup_df['Player Number'][i] = number
+            lineup_df.loc[i, 'Player Number'] = number
             
         # Starting lineup에서 Position 연결
         positions = ['좌익수', '중견수', '우익수', '1루수', '2루수', '유격수', '3루수','포수']

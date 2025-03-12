@@ -13,7 +13,7 @@ from imblearn.over_sampling import ADASYN
 
 if __name__ == "__main__":
 
-    data = pd.read_excel('gamelog_agg.xlsx')
+    data = pd.read_excel('data/gamelog_agg.xlsx')
 
     x = data.iloc[:, 2:-1].values
     y = data.iloc[:, -1:].values
@@ -26,8 +26,8 @@ if __name__ == "__main__":
 
     x_train, x_test_have_num, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
-    x_train = x_train[:,4:]
-    x_test = x_test_have_num[:,4:]
+    x_train = x_train[:,5:]
+    x_test = x_test_have_num[:,5:]
 
     # RandomOverSampler 객체 생성
     adasyn = ADASYN(random_state=42)
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     x_test = scaler.transform(x_test)
 
 
-    filepath = 'models/kbo_model.{epoch:02d}.hdf5'
+    filepath = 'models/kbo_model_ada.{epoch:02d}.keras'
     modelckpt = ModelCheckpoint(filepath=filepath)
 
     # Sequential 모델 생성
